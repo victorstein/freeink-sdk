@@ -1358,8 +1358,9 @@ constexpr BoardProfile STICKY = {
 //   PENDING hardware validation: panel orientation (ships NO_FLIP), touch swap/flip, the exact
 //     frontlight GPIO(s)/freq (warm+cold; the SDK models one channel — primary brightness here),
 //     the GPIO5 SD-enable role and GPIO2 (a board-init output driven LOW, role unknown), and
-//     battery/VBUS pins. The ADC-ladder pins are UNKNOWN — GPIO1/GPIO2 (the old guess) are power
+//     battery pins. The ADC-ladder pins are UNKNOWN — GPIO1/GPIO2 (the old guess) are power
 //     outputs, not ladder inputs. See the findings doc before trusting any PENDING value.
+//   CONFIRMED (bereanOS #185): VBUS detect on GPIO21, active HIGH — see usbDetect below.
 constexpr BoardProfile XTEINK_X4_PRO = {
     Board::XteinkX4Pro,
     "xteink_x4_pro",
@@ -1397,7 +1398,8 @@ constexpr BoardProfile XTEINK_X4_PRO = {
     PIN_UNASSIGNED,  // batteryAdc: monitoring exists ("Battery Meter"/"Low battery") but pin not isolated
     PIN_UNASSIGNED,  // batteryChargeStatus
     2.0f,
-    PIN_UNASSIGNED,  // usbDetect: USB-MSC/VBUS-detect present; GPIO10 is a candidate (unconfirmed)
+    21,  // usbDetect: VBUS sense, HIGH = USB power present (host or wall charger). Floats ~280 ms while
+         // VBUS rises; bereanOS's HAL reads it with a pull-down. Bench-confirmed 2026-09-29 (bereanOS #185).
     // GT911 touch on the SHARED I2C bus SDA39/SCL38 (with RTC 0x51 + CW2017 gauge 0x63), addr 0x5D
     // (alt 0x14), 400 kHz. CONFIRMED ON HARDWARE: **INT=GPIO10, RST=GPIO4** (a first RE had these
     // reversed), and the controller is on an **active-LOW power rail: GPIO2** (powerEnable=2,

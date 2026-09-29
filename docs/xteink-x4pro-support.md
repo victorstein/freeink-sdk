@@ -147,7 +147,8 @@ The **Home pad** is a GT911 capacitive key bit (status `0x10`), not a GPIO —
 RE-confirmed the OEM keys off exactly `0x814E & 0x10`, so our handling matches.
 
 Prior notes had INT=21 (app0), then INT=4/RST=10 — both wrong; the confirmed wiring
-is **INT=10, RST=4, power=GPIO2-low** above.
+is **INT=10, RST=4, power=GPIO2-low** above. (GPIO21 is the VBUS detect input — see
+[RTC / USB / battery](#rtc--usb--battery).)
 
 ## Input — digital buttons + capacitive Home
 
@@ -256,7 +257,7 @@ define `USE_BLOCK_DEVICE_INTERFACE=1` (the `x4pro` env does).
 | 0x51 | **RTC** — BM8563 (PCF8563-compatible), initializes on hardware |
 | 0x63 | **CW2017 battery fuel gauge** — an i2c register dump showed the classic BATINFO battery-model curve at regs `0x10`–`0x3F`; CW2017's default address is 0x63. **Not** a display PMIC. |
 
-The **GT911 touch** is on the same bus at **0x5D** (INT=GPIO4, RST=GPIO10; see
+The **GT911 touch** is on the same bus at **0x5D** (INT=GPIO10, RST=GPIO4; see
 [Touch](#touch--gt911)).
 
 ## RTC / USB / battery
@@ -275,8 +276,11 @@ The **GT911 touch** is on the same bus at **0x5D** (INT=GPIO4, RST=GPIO10; see
   resident profile and re-uploads the OEM table (recovered from app1's
   `Cw2017PowerHal`) if it's missing, then reads **SoC from reg 0x04** and **VCELL
   from regs 0x02/0x03** (14-bit, `mV = (raw·5 + 8) >> 4`). Charging state is not
-  observable from the gauge (no charger IC on this bus); the VBUS/USB-detect pin was
-  **not conclusively identified**.
+  observable from the gauge (no charger IC on this bus).
+- **USB/VBUS detect: GPIO21, active HIGH** — bench-confirmed 2026-09-29 (bereanOS #185) on a
+  data cable *and* a wall charger, so it senses power, not host enumeration. The line floats
+  for ~280 ms while VBUS rises and stays HIGH for ~280 ms while it decays, so read it with a
+  pull-down and debounce it. GPIO10 is the GT911 INT line, not a detect candidate.
 
 ## Frontlight — dual warm/cold PWM
 
